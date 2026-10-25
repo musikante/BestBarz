@@ -234,14 +234,13 @@ public sealed class BestBarWindow : Form
         }
     }
 
-    // An appbar — normally the Windows taskbar, on whichever side — lies between this bar and the
-    // screen edge: the trigger zone is on the way to it, so a plain pass would open the bar in vain.
-    // Such a bar only opens with Ctrl. Not when the bar covers the taskbar (it then has the real edge).
+    // An appbar — normally the Windows taskbar, on whichever side — occupies this edge: the trigger
+    // zone is on the way to it (or, with "Cover the taskbar", on it), so a plain pass would open the
+    // bar in vain. Such a bar only opens with Ctrl.
     private bool BesideTaskbar
     {
         get
         {
-            if (_global.FullScreenBars.Contains(Edge)) return false;
             var screen = TargetScreen;
             Rectangle wa = screen.WorkingArea, all = screen.Bounds;
             return Edge switch
