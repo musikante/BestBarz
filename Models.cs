@@ -45,6 +45,13 @@ public class BarConfig
     public bool          Enabled           { get; set; } = true;
     public List<ShortcutItem> Shortcuts    { get; set; } = [];
     public string        FilePath          { get; set; } = "";   // non-empty for group bars; main bars use FolderPath/_bar.xml
+
+    // A separator coloured like the bar is invisible — the default, both Control — so it then takes
+    // a contrasting shade of the bar colour. A distinct separator colour is kept as chosen.
+    public Color VisibleSeparatorColor =>
+        SeparatorColor.ToArgb() != ToolbarColor.ToArgb() ? SeparatorColor
+        : ToolbarColor.GetBrightness() < 0.5f            ? ControlPaint.Light(ToolbarColor)
+        :                                                   ControlPaint.Dark(ToolbarColor);
 }
 
 // ── Global config ─────────────────────────────────────────────────────────────

@@ -215,7 +215,7 @@ public sealed class BestBarWindow : Form
         bool blocked = _fullscreenActive || _focusBlocked || BesideTaskbar;
         bool ctrl    = (Win32.GetAsyncKeyState(Win32.VK_CONTROL) & 0x8000) != 0;
         bool atEdge  = IsAtEdge(cursor, ctrl) && (!blocked || ctrl);
-        bool want    = _holdOpen > 0 || (_phase != Phase.Hidden && Bounds.Contains(cursor)) || atEdge;
+        bool want    = _holdOpen > 0 || (_phase != Phase.Hidden && (Bounds.Contains(cursor) || EdgeStrip.Contains(cursor))) || atEdge;
         long now  = Environment.TickCount64;
 
         if (want)
@@ -231,6 +231,24 @@ public sealed class BestBarWindow : Form
             if (_awaySince < 0) _awaySince = now;
             if ((_phase is Phase.Shown or Phase.FadingIn) && now - _awaySince >= _global.HideDelay[EdgeIndex])
                 BeginHide();
+        }
+    }
+
+    // The strip the bar would fill if stretched: the whole edge, as deep as the bar. The trigger is the
+    // whole edge, so the way from where the bar opened to the bar itself runs through here — an open
+    // bar stays open in it instead of hiding as soon as the cursor leaves the thin trigger band.
+    private Rectangle EdgeStrip
+    {
+        get
+        {
+            Rectangle a = EdgeArea, b = _barBounds;
+            return Edge switch
+            {
+                DockPosition.Left  => Rectangle.FromLTRB(a.Left, a.Top, b.Right, a.Bottom),
+                DockPosition.Right => Rectangle.FromLTRB(b.Left, a.Top, a.Right, a.Bottom),
+                DockPosition.Top   => Rectangle.FromLTRB(a.Left, a.Top, a.Right, b.Bottom),
+                _                  => Rectangle.FromLTRB(a.Left, b.Top, a.Right, a.Bottom),
+            };
         }
     }
 
@@ -260,6 +278,8 @@ public sealed class BestBarWindow : Form
         var area = EdgeArea;
         if (!(ctrl ? TargetScreen.Bounds : area).Contains(p)) return false;
 
+        if (InProtectedCorner(p, area)) return false;
+
         // The whole edge triggers, whatever the bar's length and alignment. Each corner is left out —
         // a square as deep as the neighbouring edge's band — so it doesn't open the two bars meeting there.
         int Band(DockPosition e) => _global.PointerDistance[(int)e] + 1;
@@ -273,6 +293,17 @@ public sealed class BestBarWindow : Form
             DockPosition.Top    => p.Y <= area.Top + d        && alongX,
             _                   => p.Y >= area.Bottom - 1 - d && alongX,
         };
+    }
+
+    // A maximized window keeps its minimize/maximize/close buttons in the top-right corner (and its
+    // icon or menu top-left): with "protect corner" on, reaching them opens no bar (Top, Left or Right).
+    private bool InProtectedCorner(Point p, Rectangle area)
+    {
+        float scale = DeviceDpi / 96f;
+        int w = (int)(150 * scale), h = (int)(40 * scale);
+        return p.Y < area.Top + h &&
+               ((_global.ProtectTopLeftCorner  && p.X <  area.Left + w) ||
+                (_global.ProtectTopRightCorner && p.X >= area.Right - w));
     }
 
     // ── Show / hide / fade ────────────────────────────────────────────────────
@@ -471,7 +502,7 @@ public sealed class BestBarWindow : Form
             AutoSize    = false,
             Text        = sc.Text,
             UseMnemonic = false,
-            BackColor   = _bar.SeparatorColor,
+            BackColor   = _bar.VisibleSeparatorColor,
             ForeColor   = _bar.SeparatorTextColor,
             Margin      = new Padding(1, 2, 1, 2),
             TextAlign   = _bar.SeparatorTextAlign switch
@@ -1065,7 +1096,9 @@ public sealed class BestBarWindow : Form
         dlg.AcceptButton = ok;
         dlg.CancelButton = can;
         txt.SelectAll();
-        return dlg.ShowDialog(this) == DialogResult.OK ? txt.Text.Trim() : null;
+        _holdOpen++;   // like the other dialogs: the bar stays put while the name is typed
+        try { return dlg.ShowDialog(this) == DialogResult.OK ? txt.Text.Trim() : null; }
+        finally { _holdOpen = Math.Max(0, _holdOpen - 1); }
     }
 
     // ── Cleanup ───────────────────────────────────────────────────────────────

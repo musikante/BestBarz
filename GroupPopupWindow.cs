@@ -151,7 +151,7 @@ public sealed class GroupPopupWindow : Form
             AutoSize         = false,
             Text             = sc.Text,
             UseMnemonic      = false,
-            BackColor        = _parentBar.SeparatorColor,
+            BackColor        = _parentBar.VisibleSeparatorColor,
             ForeColor        = _parentBar.SeparatorTextColor,
             Margin           = new Padding(1, 2, 1, 2),
             Height           = labelled ? 18 : 3,

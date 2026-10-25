@@ -15,6 +15,7 @@ public sealed class BestBarzApp : ApplicationContext
     private readonly System.Windows.Forms.Timer _refreshTimer = new() { Interval = 1500 };
     private FileSystemWatcher?       _fsw;
     private bool                     _barsSuspended;
+    private bool                     _settingsOpen;
     private HotkeyWindow?            _hotkeyWin;
     // Marshals watcher events (thread pool) to the UI thread. Not a bar window: a bar that was
     // never shown has no handle, and BeginInvoke on it would drop the reload.
@@ -240,9 +241,19 @@ public sealed class BestBarzApp : ApplicationContext
 
     private void ShowSettings()
     {
+        // One Settings at a time (bar submenu and tray both open it): the later one would save over
+        // the first. No reload while open either — not even one already pending from before: it would
+        // replace the bars and global settings the dialog is editing, losing its changes on OK.
+        if (_settingsOpen) return;
+        _settingsOpen = true;
+        _refreshTimer.Stop();
         if (_fsw != null) _fsw.EnableRaisingEvents = false;
         try { ShowSettingsCore(); }
-        finally { if (_fsw != null) _fsw.EnableRaisingEvents = true; }
+        finally
+        {
+            if (_fsw != null) _fsw.EnableRaisingEvents = true;
+            _settingsOpen = false;
+        }
     }
 
     private void ShowSettingsCore()
