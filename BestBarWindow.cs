@@ -119,15 +119,32 @@ public sealed class BestBarWindow : Form
     private Rectangle EdgeArea =>
         _global.FullScreenBars.Contains(Edge) ? TargetScreen.Bounds : TargetScreen.WorkingArea;
 
+    // Length the items need along the edge, including the bar's padding.
+    private int ItemsLength()
+    {
+        int along = 2 * BarPadding;
+        foreach (Control c in _panel.Controls)
+            along += Vertical ? c.Height + c.Margin.Vertical : c.Width + c.Margin.Horizontal;
+        return along;
+    }
+
+    // Stretch fills the whole edge; its items sit in the middle instead of at one end.
+    // FlowLayoutPanel can't center, so the leading padding takes half the spare length.
+    private void CenterStretchedItems()
+    {
+        int len  = Vertical ? _barBounds.Height : _barBounds.Width;
+        int lead = _global.StretchBars.Contains(Edge) ? Math.Max(0, (len - ItemsLength()) / 2) : 0;
+        var pad  = Vertical ? new Padding(BarPadding, BarPadding + lead, BarPadding, BarPadding)
+                            : new Padding(BarPadding + lead, BarPadding, BarPadding, BarPadding);
+        if (_panel.Padding != pad) _panel.Padding = pad;
+    }
+
     private Rectangle ComputeBounds()
     {
-        var area = EdgeArea;
-        int along = 2 * BarPadding, across = 0;
+        var area  = EdgeArea;
+        int along = ItemsLength(), across = 0;
         foreach (Control c in _panel.Controls)
-        {
-            along  += Vertical ? c.Height + c.Margin.Vertical : c.Width + c.Margin.Horizontal;
-            across  = Math.Max(across, Vertical ? c.Width + c.Margin.Horizontal : c.Height + c.Margin.Vertical);
-        }
+            across = Math.Max(across, Vertical ? c.Width + c.Margin.Horizontal : c.Height + c.Margin.Vertical);
         across += 2 * BarPadding;
 
         bool stretch = _global.StretchBars.Contains(Edge);
@@ -154,10 +171,11 @@ public sealed class BestBarWindow : Form
     {
         if (IsDisposed) return;
         // A bar that was never shown has no window handle, and BeginInvoke would throw.
-        if (!IsHandleCreated) { _barBounds = ComputeBounds(); return; }
+        if (!IsHandleCreated) { _barBounds = ComputeBounds(); CenterStretchedItems(); return; }
         BeginInvoke(() =>
         {
             _barBounds = ComputeBounds();
+            CenterStretchedItems();
             if (Visible) Bounds = _barBounds;
         });
     }
@@ -410,6 +428,7 @@ public sealed class BestBarWindow : Form
         _panel.ResumeLayout(true);
         if (_arrangeTarget != null) HighlightArrangeButton(true);
         _barBounds = ComputeBounds();
+        CenterStretchedItems();
         if (Visible) Bounds = _barBounds;
         PlaceArrangeHelp();
     }
