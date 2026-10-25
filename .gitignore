@@ -1,0 +1,8 @@
+# Build output (also holds the personal Config folder next to the exe)
+bin/
+obj/
+
+# Visual Studio
+.vs/
+*.user
+*.suo
