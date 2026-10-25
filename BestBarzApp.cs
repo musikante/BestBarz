@@ -260,7 +260,9 @@ public sealed class BestBarzApp : ApplicationContext
     {
         DialogResult result;
         using (var dlg = new SettingsForm(_global, _bars, _cfg))
-            result = dlg.ShowDialog();
+            // Owned by a window that is never hidden or destroyed. Without an owner, ShowDialog takes the
+            // active window — a bar, when opened from a bar's menu — and Settings then closed by itself.
+            result = dlg.ShowDialog(_hotkeyWin);
 
         if (result == DialogResult.Retry)   // "Reload config": discard dialog edits, reload, reopen
         {
