@@ -6,7 +6,7 @@ namespace BestBarz;
 /// </summary>
 public sealed class BestBarzApp : ApplicationContext
 {
-    private readonly GlobalConfig    _global;
+    private GlobalConfig             _global;
     private List<BarConfig>          _bars    = [];
     private List<BestBarWindow>      _windows = [];
     private readonly ConfigService   _cfg;
@@ -124,10 +124,20 @@ public sealed class BestBarzApp : ApplicationContext
     public void DoRefresh()
     {
         DisposeWindows();
+        // _global.xml too: a hand edit must apply now, and not be overwritten later by Settings
+        // saving the stale copy still held in memory.
+        _global = _cfg.LoadGlobal();
+        ApplyGlobal();
         // No default bars here (only on first run): while the user renames edge folders to swap
         // bars, recreating Left/Top/… would make their next rename fail.
         _bars = _cfg.LoadBars();
         CreateWindows();
+    }
+
+    private void ApplyGlobal()
+    {
+        _tray.Visible        = _global.ShowTrayIcon;
+        _mouseTimer.Interval = Math.Max(10, _global.DataInterval);
     }
 
     private void OnTick(object? sender, EventArgs e)
@@ -252,9 +262,7 @@ public sealed class BestBarzApp : ApplicationContext
         _cfg.SaveGlobal(_global);
         foreach (var bar in _bars) _cfg.SaveBar(bar);
 
-        _tray.Visible        = _global.ShowTrayIcon;
-        _mouseTimer.Interval = Math.Max(10, _global.DataInterval);
-
+        ApplyGlobal();
         DisposeWindows();
         CreateWindows();
     }

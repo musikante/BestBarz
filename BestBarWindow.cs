@@ -212,8 +212,9 @@ public sealed class BestBarWindow : Form
 
         // Fullscreen apps and "only on desktop" block the edge trigger; holding Ctrl overrides both.
         // GetAsyncKeyState because the bar never has focus, so Control.ModifierKeys wouldn't see the key.
-        bool blocked = _fullscreenActive || _focusBlocked;
-        bool atEdge  = IsAtEdge(cursor) && (!blocked || (Win32.GetAsyncKeyState(Win32.VK_CONTROL) & 0x8000) != 0);
+        bool blocked = _fullscreenActive || _focusBlocked || BesideTaskbar;
+        bool ctrl    = (Win32.GetAsyncKeyState(Win32.VK_CONTROL) & 0x8000) != 0;
+        bool atEdge  = IsAtEdge(cursor, ctrl) && (!blocked || ctrl);
         bool want    = _holdOpen > 0 || (_phase != Phase.Hidden && Bounds.Contains(cursor)) || atEdge;
         long now  = Environment.TickCount64;
 
@@ -233,19 +234,45 @@ public sealed class BestBarWindow : Form
         }
     }
 
-    private bool IsAtEdge(Point p)
+    // An appbar — normally the Windows taskbar, on whichever side — lies between this bar and the
+    // screen edge: the trigger zone is on the way to it, so a plain pass would open the bar in vain.
+    // Such a bar only opens with Ctrl. Not when the bar covers the taskbar (it then has the real edge).
+    private bool BesideTaskbar
+    {
+        get
+        {
+            if (_global.FullScreenBars.Contains(Edge)) return false;
+            var screen = TargetScreen;
+            Rectangle wa = screen.WorkingArea, all = screen.Bounds;
+            return Edge switch
+            {
+                DockPosition.Left  => wa.Left   > all.Left,
+                DockPosition.Right => wa.Right  < all.Right,
+                DockPosition.Top   => wa.Top    > all.Top,
+                _                  => wa.Bottom < all.Bottom,
+            };
+        }
+    }
+
+    // With Ctrl, the Windows taskbar strip beyond the working area also counts, so the bar next to
+    // the taskbar can be reached from it. Without Ctrl the taskbar stays the taskbar's.
+    private bool IsAtEdge(Point p, bool ctrl)
     {
         var area = EdgeArea;
-        if (!area.Contains(p)) return false;
+        if (!(ctrl ? TargetScreen.Bounds : area).Contains(p)) return false;
 
-        int d = _global.PointerDistance[EdgeIndex];
-        var r = _barBounds;
+        // The whole edge triggers, whatever the bar's length and alignment. Each corner is left out —
+        // a square as deep as the neighbouring edge's band — so it doesn't open the two bars meeting there.
+        int Band(DockPosition e) => _global.PointerDistance[(int)e] + 1;
+        int d = Band(Edge) - 1;
+        bool alongY = p.Y >= area.Top + Band(DockPosition.Top)  && p.Y < area.Bottom - Band(DockPosition.Bottom);
+        bool alongX = p.X >= area.Left + Band(DockPosition.Left) && p.X < area.Right - Band(DockPosition.Right);
         return Edge switch
         {
-            DockPosition.Left   => p.X <= area.Left + d       && p.Y >= r.Top  && p.Y < r.Bottom,
-            DockPosition.Right  => p.X >= area.Right - 1 - d  && p.Y >= r.Top  && p.Y < r.Bottom,
-            DockPosition.Top    => p.Y <= area.Top + d        && p.X >= r.Left && p.X < r.Right,
-            _                   => p.Y >= area.Bottom - 1 - d && p.X >= r.Left && p.X < r.Right,
+            DockPosition.Left   => p.X <= area.Left + d       && alongY,
+            DockPosition.Right  => p.X >= area.Right - 1 - d  && alongY,
+            DockPosition.Top    => p.Y <= area.Top + d        && alongX,
+            _                   => p.Y >= area.Bottom - 1 - d && alongX,
         };
     }
 
@@ -285,6 +312,10 @@ public sealed class BestBarWindow : Form
         if (WindowState != FormWindowState.Normal) WindowState = FormWindowState.Normal;
         Bounds = bounds;
         if (!Visible) Show();
+        // Showing keeps the old z-order, and the Windows 11 taskbar (also topmost) puts itself on top
+        // whenever it is used: a bar over it would appear hidden behind it. Bring the bar to the front.
+        Win32.SetWindowPos(Handle, Win32.HWND_TOPMOST, 0, 0, 0, 0,
+                           Win32.SWP_NOMOVE | Win32.SWP_NOSIZE | Win32.SWP_NOACTIVATE);
     }
 
     public void HideNow()
