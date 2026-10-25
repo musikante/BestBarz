@@ -25,6 +25,12 @@ public class ShortcutItem
     public static string CleanPath(string path) => path.Trim().Trim('"').Trim();
 
     public ShortcutItem Clone() => (ShortcutItem)MemberwiseClone();
+
+    // Environment variables (%TEMP%, %USERPROFILE%…) are stored as typed and expanded on use, so a
+    // button keeps working for another user or PC. Only %NAME% of an existing variable is replaced.
+    public string ExpandedTarget           => Environment.ExpandEnvironmentVariables(Target);
+    public string ExpandedArguments        => Environment.ExpandEnvironmentVariables(Arguments);
+    public string ExpandedWorkingDirectory => Environment.ExpandEnvironmentVariables(WorkingDirectory);
 }
 
 // ── Per-bar config ────────────────────────────────────────────────────────────

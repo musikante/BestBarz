@@ -555,24 +555,25 @@ public sealed class BestBarWindow : Form
 
     // ── Shortcut operations ───────────────────────────────────────────────────
 
-    private static void Launch(ShortcutItem sc)
+    internal static void Launch(ShortcutItem sc)
     {
+        var target = sc.ExpandedTarget;
         try
         {
-            var workDir = sc.WorkingDirectory;
+            var workDir = sc.ExpandedWorkingDirectory;
             if (string.IsNullOrEmpty(workDir))
-                workDir = Directory.Exists(sc.Target) ? sc.Target : Path.GetDirectoryName(sc.Target) ?? "";
+                workDir = Directory.Exists(target) ? target : Path.GetDirectoryName(target) ?? "";
             System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
             {
-                FileName         = sc.Target,
-                Arguments        = sc.Arguments,
+                FileName         = target,
+                Arguments        = sc.ExpandedArguments,
                 WorkingDirectory = workDir,
                 UseShellExecute  = true,
             });
         }
         catch (Exception ex)
         {
-            MessageBox.Show($"Could not launch:\n{sc.Target}\n\n{ex.Message}", "BestBarz",
+            MessageBox.Show($"Could not launch:\n{target}\n\n{ex.Message}", "BestBarz",
                 MessageBoxButtons.OK, MessageBoxIcon.Error);
         }
     }

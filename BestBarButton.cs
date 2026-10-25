@@ -35,7 +35,7 @@ public sealed class BestBarButton : Button
         Image = sc.IsGroup
             ? GroupArrowImage(bar.DockPosition, large ? 32 : 16, bar.ButtonTextColor)
             : (FindControlPanelFile(sc) is { } cpl ? ExtractEmbeddedIcon(cpl, large) : null)
-              ?? ExtractIcon(sc.Target, large);
+              ?? ExtractIcon(sc.ExpandedTarget, large);
 
         switch (style)
         {
@@ -119,13 +119,14 @@ public sealed class BestBarButton : Button
     private static string? FindControlPanelFile(ShortcutItem sc)
     {
         string? cpl = null;
-        if (sc.Target.EndsWith(".cpl", StringComparison.OrdinalIgnoreCase))
-            cpl = sc.Target;
-        else if (Path.GetFileName(sc.Target) is var exe &&
+        var target = sc.ExpandedTarget;
+        if (target.EndsWith(".cpl", StringComparison.OrdinalIgnoreCase))
+            cpl = target;
+        else if (Path.GetFileName(target) is var exe &&
                  (exe.Equals("control.exe",  StringComparison.OrdinalIgnoreCase) ||
                   exe.Equals("rundll32.exe", StringComparison.OrdinalIgnoreCase)))
         {
-            var m = CplArg.Match(sc.Arguments);
+            var m = CplArg.Match(sc.ExpandedArguments);
             if (m.Success) cpl = m.Groups[1].Success ? m.Groups[1].Value : m.Groups[2].Value;
         }
         if (cpl == null) return null;

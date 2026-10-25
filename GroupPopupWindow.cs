@@ -397,27 +397,7 @@ public sealed class GroupPopupWindow : Form
         finally { _menuOpen = Math.Max(0, _menuOpen - 1); }
     }
 
-    private static void LaunchItem(ShortcutItem sc)
-    {
-        try
-        {
-            var workDir = sc.WorkingDirectory;
-            if (string.IsNullOrEmpty(workDir))
-                workDir = Directory.Exists(sc.Target) ? sc.Target : Path.GetDirectoryName(sc.Target) ?? "";
-            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
-            {
-                FileName         = sc.Target,
-                Arguments        = sc.Arguments,
-                WorkingDirectory = workDir,
-                UseShellExecute  = true,
-            });
-        }
-        catch (Exception ex)
-        {
-            MessageBox.Show($"Could not launch:\n{sc.Target}\n\n{ex.Message}", "BestBarz",
-                MessageBoxButtons.OK, MessageBoxIcon.Error);
-        }
-    }
+    private static void LaunchItem(ShortcutItem sc) => BestBarWindow.Launch(sc);
 
     // ── Arrange mode ─────────────────────────────────────────────────────────
 
