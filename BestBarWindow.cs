@@ -16,9 +16,7 @@ public sealed class BestBarWindow : Form
     private readonly BarConfig       _bar;
     private readonly GlobalConfig    _global;
     private readonly ConfigService   _cfg;
-    private readonly Action?         _onSettings;
-    private readonly Action?         _onToggleBars;
-    private readonly Action?         _onExit;
+    private readonly Action<ToolStripItemCollection>? _fillAppMenu;   // tray menu items, for the "BestBarz" submenu
     private readonly FlowLayoutPanel _panel;
     private readonly System.Windows.Forms.Timer _fadeTimer = new();
     private readonly ToolTip         _tip = new() { ShowAlways = true };
@@ -51,14 +49,12 @@ public sealed class BestBarWindow : Form
     private bool         Vertical  => Edge is DockPosition.Left or DockPosition.Right;
 
     public BestBarWindow(BarConfig bar, GlobalConfig global, ConfigService cfg,
-                         Action? onSettings = null, Action? onToggleBars = null, Action? onExit = null)
+                         Action<ToolStripItemCollection>? fillAppMenu = null)
     {
         _bar           = bar;
         _global        = global;
         _cfg           = cfg;
-        _onSettings    = onSettings;
-        _onToggleBars  = onToggleBars;
-        _onExit        = onExit;
+        _fillAppMenu   = fillAppMenu;
 
         FormBorderStyle = FormBorderStyle.None;
         ShowInTaskbar   = false;
@@ -451,10 +447,7 @@ public sealed class BestBarWindow : Form
         var groupBar = _cfg.LoadGroupBar(sc.GroupFile)
                        ?? new BarConfig { Name = Path.GetFileNameWithoutExtension(sc.GroupFile), FilePath = sc.GroupFile };
         var anchorBounds = btn.RectangleToScreen(btn.ClientRectangle);
-        var popup = new GroupPopupWindow(_cfg, groupBar, _global, _bar, Edge, anchorBounds,
-            onSettings:   Deferred(_onSettings),
-            onToggleBars: Deferred(_onToggleBars),
-            onExit:       Deferred(_onExit));
+        var popup = new GroupPopupWindow(_cfg, groupBar, _global, _bar, Edge, anchorBounds, fillAppMenu: _fillAppMenu);
         _activePopup   = popup;
         _activePopupSc = sc;
         _holdOpen++;
@@ -465,9 +458,6 @@ public sealed class BestBarWindow : Form
         };
         popup.Show(this);
     }
-
-    private Action? Deferred(Action? action) =>
-        action == null ? null : () => BeginInvoke(action);
 
     private void CloseActivePopup()
     {
@@ -875,20 +865,18 @@ public sealed class BestBarWindow : Form
         menu.Items.Add("Add Separator", null, (_, _) => AddSeparatorAfter(_menuTarget));
         menu.Items.Add(new ToolStripSeparator());
         menu.Items.Add(remove);
-        menu.Items.Add(new ToolStripSeparator());
-        if (_onToggleBars != null)
+        // Submenu with the tray menu's items (Settings, Hide bars, bar toggles, Exit). Being part of
+        // this menu, it keeps the bar open while in use — a separate menu died when the bar hid.
+        var app = new ToolStripMenuItem("BestBarz");
+        if (_fillAppMenu != null)
         {
-            var hide = new ToolStripMenuItem("Hide bars") { ShortcutKeyDisplayString = "Ctrl+Alt+B" };
-            hide.Click += (_, _) => _onToggleBars();
-            menu.Items.Add(hide);
+            menu.Items.Add(new ToolStripSeparator());
+            menu.Items.Add(app);
         }
-        if (_onSettings != null)
-            menu.Items.Add("Settings…", null, (_, _) => BeginInvoke(_onSettings));
-        if (_onExit != null)
-            menu.Items.Add("Exit BestBarz", null, (_, _) => BeginInvoke(_onExit));
 
         menu.Opening += (_, _) =>
         {
+            _fillAppMenu?.Invoke(app.DropDownItems);
             _menuTarget       = menu.SourceControl?.Tag as ShortcutItem;
             bool onItem       = _menuTarget != null;
             bool hasClip      = BarClipboard.Item != null;
@@ -904,7 +892,7 @@ public sealed class BestBarWindow : Form
         };
         // Any other command while arranging (Cut, Remove, …) first approves the pending order,
         // so Esc can't later restore a list those commands already changed on disk.
-        menu.ItemClicked += (_, e) => { if (e.ClickedItem != arrange && _arrangeTarget != null) ExitArrangeMode(); };
+        menu.ItemClicked += (_, e) => { if (e.ClickedItem != arrange && e.ClickedItem != app && _arrangeTarget != null) ExitArrangeMode(); };
         menu.Opened += (_, _) => _holdOpen++;
         menu.Closed += (_, _) => _holdOpen = Math.Max(0, _holdOpen - 1);
         MenuDismiss.Attach(menu);

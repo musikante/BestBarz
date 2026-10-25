@@ -19,9 +19,7 @@ public sealed class GroupPopupWindow : Form
     private readonly GlobalConfig       _global;
     private readonly BarConfig          _parentBar;
     private readonly DockPosition       _parentEdge;
-    private readonly Action?            _onSettings;
-    private readonly Action?            _onToggleBars;
-    private readonly Action?            _onExit;
+    private readonly Action<ToolStripItemCollection>? _fillAppMenu;   // tray menu items, for the "BestBarz" submenu
     private readonly ContextMenuStrip   _menu;
     private ShortcutItem?               _menuTarget;
 
@@ -41,9 +39,7 @@ public sealed class GroupPopupWindow : Form
         BarConfig parentBar,
         DockPosition parentEdge,
         Rectangle anchorBounds,
-        Action? onSettings = null,
-        Action? onToggleBars = null,
-        Action? onExit = null)
+        Action<ToolStripItemCollection>? fillAppMenu = null)
     {
         _cfg          = cfg;
         _groupBar     = groupBar;
@@ -51,9 +47,7 @@ public sealed class GroupPopupWindow : Form
         _parentBar    = parentBar;
         _parentEdge   = parentEdge;
         _anchor       = anchorBounds;
-        _onSettings   = onSettings;
-        _onToggleBars = onToggleBars;
-        _onExit       = onExit;
+        _fillAppMenu  = fillAppMenu;
 
         FormBorderStyle = FormBorderStyle.None;
         ShowInTaskbar   = false;
@@ -187,20 +181,16 @@ public sealed class GroupPopupWindow : Form
         menu.Items.Add("Add Separator", null, (_, _) => AddSeparatorAfter(_menuTarget));
         menu.Items.Add(new ToolStripSeparator());
         menu.Items.Add(remove);
-        menu.Items.Add(new ToolStripSeparator());
-        if (_onToggleBars != null)
+        var app = new ToolStripMenuItem("BestBarz");   // tray menu items; see BestBarWindow
+        if (_fillAppMenu != null)
         {
-            var hide = new ToolStripMenuItem("Hide bars") { ShortcutKeyDisplayString = "Ctrl+Alt+B" };
-            hide.Click += (_, _) => _onToggleBars();
-            menu.Items.Add(hide);
+            menu.Items.Add(new ToolStripSeparator());
+            menu.Items.Add(app);
         }
-        if (_onSettings != null)
-            menu.Items.Add("Settings…", null, (_, _) => _onSettings());
-        if (_onExit != null)
-            menu.Items.Add("Exit BestBarz", null, (_, _) => _onExit());
 
         menu.Opening += (_, _) =>
         {
+            _fillAppMenu?.Invoke(app.DropDownItems);
             _menuTarget     = menu.SourceControl?.Tag as ShortcutItem;
             bool onItem     = _menuTarget != null;
             cut.Enabled     = onItem;
@@ -212,7 +202,7 @@ public sealed class GroupPopupWindow : Form
             remove.Enabled  = onItem;
         };
         // Any other command while arranging first approves the pending order (see BestBarWindow).
-        menu.ItemClicked += (_, e) => { if (e.ClickedItem != arrange && _arrangeTarget != null) ExitArrangeMode(); };
+        menu.ItemClicked += (_, e) => { if (e.ClickedItem != arrange && e.ClickedItem != app && _arrangeTarget != null) ExitArrangeMode(); };
         menu.Opened += (_, _) => _menuOpen++;
         menu.Closed += (_, _) => _menuOpen = Math.Max(0, _menuOpen - 1);
         MenuDismiss.Attach(menu);

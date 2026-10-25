@@ -46,13 +46,7 @@ public sealed class BestBarzApp : ApplicationContext
             Visible          = _global.ShowTrayIcon,
             ContextMenuStrip = BuildTrayMenu(),
         };
-        _tray.MouseClick += (_, e) =>
-        {
-            if (e.Button == MouseButtons.Left)
-                typeof(NotifyIcon).GetMethod("ShowContextMenu",
-                        System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)
-                    ?.Invoke(_tray, null);
-        };
+        _tray.MouseClick += (_, e) => { if (e.Button == MouseButtons.Left) ShowTrayMenu(); };
 
         _mouseTimer = new System.Windows.Forms.Timer { Interval = Math.Max(10, _global.DataInterval) };
         _mouseTimer.Tick += OnTick;
@@ -73,23 +67,13 @@ public sealed class BestBarzApp : ApplicationContext
             if (_barsSuspended) w.SuspendPolling();
             else                w.ResumePolling();
         }
-        // Posted: ToggleBars can run from a tray menu click, which mustn't dispose its own menu.
-        _ui.Post(_ =>
-        {
-            var old = _tray.ContextMenuStrip;
-            _tray.ContextMenuStrip = BuildTrayMenu();
-            old?.Dispose();
-        }, null);
     }
 
     private void CreateWindows()
     {
         foreach (var bar in _bars)
         {
-            var win = new BestBarWindow(bar, _global, _cfg,
-                onSettings:   ShowSettings,
-                onToggleBars: ToggleBars,
-                onExit:       Exit);
+            var win = new BestBarWindow(bar, _global, _cfg, fillAppMenu: FillAppMenu);
             if (_barsSuspended) win.SuspendPolling();   // recreated after Settings/reload: keep Ctrl+Alt+B state
             _windows.Add(win);
         }
@@ -144,10 +128,6 @@ public sealed class BestBarzApp : ApplicationContext
         // bars, recreating Left/Top/… would make their next rename fail.
         _bars = _cfg.LoadBars();
         CreateWindows();
-
-        var old = _tray.ContextMenuStrip;
-        _tray.ContextMenuStrip = BuildTrayMenu();
-        old?.Dispose();
     }
 
     private void OnTick(object? sender, EventArgs e)
@@ -168,8 +148,15 @@ public sealed class BestBarzApp : ApplicationContext
     {
         var hwnd = Win32.GetForegroundWindow();
         if (hwnd == IntPtr.Zero) return true;
-        if (_windows.Any(w => !w.IsDisposed && w.IsHandleCreated && w.Handle == hwnd)) return true;
+        if (IsOwnWindow(hwnd)) return true;
         return IsShellWindow(hwnd);
+    }
+
+    // Any BestBarz window (bars, the tray menu — which takes the foreground —, Settings, dialogs).
+    private static bool IsOwnWindow(IntPtr hwnd)
+    {
+        Win32.GetWindowThreadProcessId(hwnd, out uint pid);
+        return pid == (uint)Environment.ProcessId;
     }
 
     private static bool IsShellWindow(IntPtr hwnd) =>
@@ -179,8 +166,7 @@ public sealed class BestBarzApp : ApplicationContext
     {
         var hwnd = Win32.GetForegroundWindow();
         if (hwnd == IntPtr.Zero) return false;
-        if (_windows.Any(w => !w.IsDisposed && w.IsHandleCreated && w.Handle == hwnd)) return false;
-        if (IsShellWindow(hwnd)) return false;
+        if (IsOwnWindow(hwnd) || IsShellWindow(hwnd)) return false;
         if (!Win32.GetWindowRect(hwnd, out var rect)) return false;
         var screen = Screen.FromHandle(hwnd).Bounds;
         return rect.Left <= screen.Left && rect.Top <= screen.Top &&
@@ -189,40 +175,55 @@ public sealed class BestBarzApp : ApplicationContext
 
     // ── Tray menu ─────────────────────────────────────────────────────────────
 
+    // Left click on the icon opens the same menu as a right click; NotifyIcon only exposes this privately.
+    private void ShowTrayMenu() =>
+        typeof(NotifyIcon).GetMethod("ShowContextMenu",
+                System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)
+            ?.Invoke(_tray, null);
+
     private ContextMenuStrip BuildTrayMenu()
     {
         var menu = new ContextMenuStrip();
-        menu.Items.Add("Settings…", null, (_, _) => ShowSettings());
-        menu.Items.Add(new ToolStripSeparator());
-        var toggleItem = new ToolStripMenuItem(_barsSuspended ? "Show bars" : "Hide bars")
+        FillAppMenu(menu.Items);
+        // Rebuilt on every opening; Cancel is preset when the strip has no items, so clear it.
+        menu.Opening += (_, e) => { FillAppMenu(menu.Items); e.Cancel = false; };
+        MenuDismiss.Attach(menu);
+        return menu;
+    }
+
+    // Items of the tray menu, also used by the bars' "BestBarz" submenu. Rebuilt on each opening so
+    // checks and labels reflect the current state. Actions run once the menu has closed: Settings and
+    // Exit recreate or dispose the bar windows that may own the menu being clicked.
+    private void FillAppMenu(ToolStripItemCollection items)
+    {
+        foreach (var old in items.Cast<ToolStripItem>().ToList()) old.Dispose();
+        items.Clear();
+        void Later(Action action) => _ui.Post(_ => action(), null);
+
+        items.Add("Settings…", null, (_, _) => Later(ShowSettings));
+        items.Add(new ToolStripSeparator());
+        items.Add(new ToolStripMenuItem(_barsSuspended ? "Show bars" : "Hide bars", null, (_, _) => Later(ToggleBars))
         {
             ShortcutKeyDisplayString = "Ctrl+Alt+B",
-        };
-        toggleItem.Click += (_, _) => ToggleBars();
-        menu.Items.Add(toggleItem);
-        menu.Items.Add(new ToolStripSeparator());
+        });
+        items.Add(new ToolStripSeparator());
 
         foreach (var (bar, window) in _bars.Select((b, i) => (b, _windows[i]))
                                            .OrderBy(x => x.b.DockPosition))
         {
-            var item   = new ToolStripMenuItem(bar.Name)
+            items.Add(new ToolStripMenuItem(bar.Name, null, (_, _) => Later(() =>
             {
-                Checked      = bar.Enabled,
-                CheckOnClick = true,
-            };
-            item.CheckedChanged += (_, _) =>
-            {
-                bar.Enabled = item.Checked;
-                if (!item.Checked) window.HideNow();
+                bar.Enabled = !bar.Enabled;
+                if (!bar.Enabled) window.HideNow();
                 _cfg.SaveBar(bar);
-            };
-            menu.Items.Add(item);
+            }))
+            {
+                Checked = bar.Enabled,
+            });
         }
 
-        menu.Items.Add(new ToolStripSeparator());
-        menu.Items.Add("Exit", null, (_, _) => Exit());
-        MenuDismiss.Attach(menu);
-        return menu;
+        items.Add(new ToolStripSeparator());
+        items.Add("Exit", null, (_, _) => Later(Exit));
     }
 
     // ── Settings ──────────────────────────────────────────────────────────────
@@ -253,10 +254,6 @@ public sealed class BestBarzApp : ApplicationContext
 
         _tray.Visible        = _global.ShowTrayIcon;
         _mouseTimer.Interval = Math.Max(10, _global.DataInterval);
-
-        var old = _tray.ContextMenuStrip;
-        _tray.ContextMenuStrip = BuildTrayMenu();
-        old?.Dispose();
 
         DisposeWindows();
         CreateWindows();

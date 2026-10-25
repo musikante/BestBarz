@@ -51,7 +51,7 @@ internal static class MenuDismiss
                                               or Win32.WM_MBUTTONDOWN or Win32.WM_XBUTTONDOWN)
                 {
                     var pt = new Point(Marshal.ReadInt32(lParam), Marshal.ReadInt32(lParam, 4));
-                    if (!menu.Bounds.Contains(pt)) CloseMenu();
+                    if (!Contains(menu, pt)) CloseMenu();
                 }
                 return Win32.CallNextHookEx(mouseHook, nCode, wParam, lParam);
             };
@@ -69,5 +69,15 @@ internal static class MenuDismiss
         };
         menu.Closed   += (_, _) => Unhook();
         menu.Disposed += (_, _) => Unhook();
+    }
+
+    // The menu or any open submenu: a click in a submenu lies outside the root menu's bounds.
+    private static bool Contains(ToolStrip strip, Point pt)
+    {
+        if (strip.Visible && strip.Bounds.Contains(pt)) return true;
+        foreach (ToolStripItem item in strip.Items)
+            if (item is ToolStripDropDownItem { DropDown.Visible: true } sub && Contains(sub.DropDown, pt))
+                return true;
+        return false;
     }
 }
