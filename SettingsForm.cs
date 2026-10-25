@@ -16,6 +16,7 @@ public sealed class SettingsForm : Form
     private bool[]        _enabled;
     private int[]         _monitor;
     private Color[]       _color;
+    private Color[]       _sepColor;
     private ButtonStyle[] _style;
     private bool[]        _alwaysVis;
     private bool[]        _fullScreen;
@@ -31,6 +32,7 @@ public sealed class SettingsForm : Form
         _enabled   = new bool[n];
         _monitor   = new int[n];
         _color     = new Color[n];
+        _sepColor  = new Color[n];
         _style     = new ButtonStyle[n];
         _alwaysVis  = new bool[n];
         _fullScreen = new bool[n];
@@ -80,6 +82,7 @@ public sealed class SettingsForm : Form
             _enabled[i]   = bar.Enabled;
             _monitor[i]   = bar.DisplayTarget;
             _color[i]     = bar.ToolbarColor;
+            _sepColor[i]  = bar.SeparatorColor;
             _style[i]     = global.ButtonLayout[edge];
             _alwaysVis[i]  = global.AlwaysVisible.Contains(bar.DockPosition);
             _fullScreen[i] = global.FullScreenBars.Contains(bar.DockPosition);
@@ -115,6 +118,15 @@ public sealed class SettingsForm : Form
                 if (dlg.ShowDialog(this) == DialogResult.OK) btnColor.BackColor = _color[idx] = dlg.Color;
             };
             tab.Controls.Add(btnColor); ty += 32;
+
+            tab.Controls.Add(Lbl(12, ty, "Separator colour:"));
+            var btnSep = new Button { Location = new Point(170, ty), Size = new Size(80, 24), BackColor = _sepColor[i], FlatStyle = FlatStyle.Flat };
+            btnSep.Click += (_, _) =>
+            {
+                using var dlg = new ColorDialog { Color = _sepColor[idx] };
+                if (dlg.ShowDialog(this) == DialogResult.OK) btnSep.BackColor = _sepColor[idx] = dlg.Color;
+            };
+            tab.Controls.Add(btnSep); ty += 32;
 
             var chkAlways = CB(12, ty, "Always visible", _alwaysVis[i]);
             chkAlways.CheckedChanged += (_, _) => _alwaysVis[idx] = chkAlways.Checked;
@@ -165,6 +177,7 @@ public sealed class SettingsForm : Form
             bar.Enabled       = _enabled[i];
             bar.DisplayTarget = _monitor[i];
             bar.ToolbarColor  = _color[i];
+            bar.SeparatorColor = _sepColor[i];
             _global.ButtonLayout[(int)bar.DockPosition] = _style[i];
             if (_alwaysVis[i]) _global.AlwaysVisible.Add(bar.DockPosition);
             else               _global.AlwaysVisible.Remove(bar.DockPosition);
