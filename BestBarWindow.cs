@@ -16,7 +16,7 @@ public sealed class BestBarWindow : Form
     private readonly BarConfig       _bar;
     private readonly GlobalConfig    _global;
     private readonly ConfigService   _cfg;
-    private readonly Action<ToolStripItemCollection>? _fillAppMenu;   // tray menu items, for the "BestBarz" submenu
+    private readonly Action<ToolStripItemCollection>? _fillAppMenu;   // tray menu items, for the "Global" submenu
     private readonly FlowLayoutPanel _panel;
     private readonly System.Windows.Forms.Timer _fadeTimer = new();
     private readonly ToolTip         _tip = new() { ShowAlways = true };
@@ -956,7 +956,7 @@ public sealed class BestBarWindow : Form
         menu.Items.Add(remove);
         // Submenu with the tray menu's items (Settings, Hide bars, bar toggles, Exit). Being part of
         // this menu, it keeps the bar open while in use — a separate menu died when the bar hid.
-        var app = new ToolStripMenuItem("BestBarz");
+        var app = new ToolStripMenuItem("Global");
         if (_fillAppMenu != null)
         {
             menu.Items.Add(new ToolStripSeparator());

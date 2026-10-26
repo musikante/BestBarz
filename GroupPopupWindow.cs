@@ -19,7 +19,7 @@ public sealed class GroupPopupWindow : Form
     private readonly GlobalConfig       _global;
     private readonly BarConfig          _parentBar;
     private readonly DockPosition       _parentEdge;
-    private readonly Action<ToolStripItemCollection>? _fillAppMenu;   // tray menu items, for the "BestBarz" submenu
+    private readonly Action<ToolStripItemCollection>? _fillAppMenu;   // tray menu items, for the "Global" submenu
     private readonly ContextMenuStrip   _menu;
     private ShortcutItem?               _menuTarget;
 
@@ -182,7 +182,7 @@ public sealed class GroupPopupWindow : Form
         menu.Items.Add("Add Separator", null, (_, _) => AddSeparatorAfter(_menuTarget));
         menu.Items.Add(new ToolStripSeparator());
         menu.Items.Add(remove);
-        var app = new ToolStripMenuItem("BestBarz");   // tray menu items; see BestBarWindow
+        var app = new ToolStripMenuItem("Global");   // tray menu items; see BestBarWindow
         if (_fillAppMenu != null)
         {
             menu.Items.Add(new ToolStripSeparator());

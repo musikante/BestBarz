@@ -202,7 +202,7 @@ public sealed class BestBarzApp : ApplicationContext
         return menu;
     }
 
-    // Items of the tray menu, also used by the bars' "BestBarz" submenu. Rebuilt on each opening so
+    // Items of the tray menu, also used by the bars' "Global" submenu. Rebuilt on each opening so
     // checks and labels reflect the current state. Actions run once the menu has closed: Settings and
     // Exit recreate or dispose the bar windows that may own the menu being clicked.
     private void FillAppMenu(ToolStripItemCollection items)
@@ -234,7 +234,7 @@ public sealed class BestBarzApp : ApplicationContext
         }
 
         items.Add(new ToolStripSeparator());
-        items.Add("Exit", null, (_, _) => Later(Exit));
+        items.Add("Exit BestBarz", null, (_, _) => Later(Exit));
     }
 
     // ── Settings ──────────────────────────────────────────────────────────────
