@@ -39,5 +39,35 @@ internal sealed record GroupTemplate(string MenuText, string Name, Func<List<Sho
             Item("Resource Monitor",      Sys + "resmon.exe"),
             Item("System Information",    Sys + "msinfo32.exe"),
         ]),
+        new("Control Panel applets", "Applets", InstalledApplets),
     ];
+
+    private static readonly Dictionary<string, string> AppletNames = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["appwiz"]   = "Programs and Features", ["bthprops"] = "Bluetooth",
+        ["desk"]     = "Display",               ["Firewall"] = "Windows Firewall",
+        ["hdwwiz"]   = "Add Hardware",          ["inetcpl"]  = "Internet Options",
+        ["intl"]     = "Region",                ["irprops"]  = "Infrared",
+        ["joy"]      = "Game Controllers",      ["main"]     = "Mouse",
+        ["mmsys"]    = "Sound",                 ["ncpa"]     = "Network Connections",
+        ["powercfg"] = "Power Options",         ["sysdm"]    = "System Properties",
+        ["TabletPC"] = "Tablet PC Settings",    ["telephon"] = "Phone and Modem",
+        ["timedate"] = "Date and Time",         ["wscui"]    = "Security and Maintenance",
+    };
+
+    // Every .cpl installed on this PC, read when the group is created — a quarry to copy buttons from.
+    // Known applets get a short name; others (drivers, third-party) their file description plus the
+    // file name, since descriptions repeat (Autodesk ships two "Autodesk Hardcopy component").
+    private static List<ShortcutItem> InstalledApplets() =>
+        [.. Directory.EnumerateFiles(Environment.SystemDirectory, "*.cpl")
+            .Select(path =>
+            {
+                var name = Path.GetFileNameWithoutExtension(path);
+                var text = AppletNames.TryGetValue(name, out var known) ? known
+                         : System.Diagnostics.FileVersionInfo.GetVersionInfo(path).FileDescription is { Length: > 0 } desc
+                             ? $"{desc} ({name})"
+                         : name;
+                return Item(text, Sys + "control.exe", Path.GetFileName(path));
+            })
+            .OrderBy(sc => sc.Text, StringComparer.CurrentCultureIgnoreCase)];
 }
