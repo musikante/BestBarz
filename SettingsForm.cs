@@ -294,12 +294,17 @@ public sealed class SettingsForm : Form
         return key?.GetValue("BestBarz") != null;
     }
 
-    private static void SetStartup(bool enable)
+    private void SetStartup(bool enable)
     {
         using var key = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(RunKey, true);
         if (key == null) return;
+        // Quoted (paths may contain spaces), and with the config folder in use unless it is the default,
+        // so starting with Windows opens the same bars as now.
+        var command = $"\"{Application.ExecutablePath}\"";
+        if (!string.Equals(_cfg.ConfigDir, Program.DefaultConfigDir, StringComparison.OrdinalIgnoreCase))
+            command += $" --config \"{_cfg.ConfigDir}\"";
         if (enable)
-            key.SetValue("BestBarz", $"\"{Application.ExecutablePath}\"");   // quoted: the path may contain spaces
+            key.SetValue("BestBarz", command);
         else
             key.DeleteValue("BestBarz", throwOnMissingValue: false);
     }

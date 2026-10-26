@@ -21,9 +21,9 @@ public sealed class BestBarzApp : ApplicationContext
     // never shown has no handle, and BeginInvoke on it would drop the reload.
     private readonly WindowsFormsSynchronizationContext _ui = new();
 
-    public BestBarzApp()
+    public BestBarzApp(string configDir)
     {
-        _cfg = new ConfigService(Path.Combine(AppContext.BaseDirectory, "Config"));
+        _cfg = new ConfigService(configDir);
 
         if (_cfg.NeedsMigration)
             _cfg.MigrateFromLegacy();
@@ -92,7 +92,7 @@ public sealed class BestBarzApp : ApplicationContext
     {
         try
         {
-            _fsw = new FileSystemWatcher(Path.Combine(AppContext.BaseDirectory, "Config"))
+            _fsw = new FileSystemWatcher(_cfg.ConfigDir)
             {
                 IncludeSubdirectories = true,
                 NotifyFilter          = NotifyFilters.FileName | NotifyFilters.DirectoryName | NotifyFilters.LastWrite,
