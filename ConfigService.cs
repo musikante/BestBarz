@@ -172,7 +172,7 @@ public class ConfigService
                 ToolbarColor       = AttrColor(root, "toolbarColor",      SystemColors.Control),
                 ButtonColor        = AttrColor(root, "buttonColor",       SystemColors.Control),
                 ButtonTextColor    = AttrColor(root, "buttonTextColor",   SystemColors.ControlText),
-                SeparatorColor     = AttrColor(root, "separatorColor",    SystemColors.Control),
+                SeparatorColor     = AttrColor(root, "separatorColor",    BarConfig.DefaultSeparatorColor),
                 SeparatorTextColor = AttrColor(root, "separatorTextColor",SystemColors.ControlText),
                 SeparatorTextAlign = root.Attribute("separatorTextAlign")?.Value ?? "Center",
                 ShowBorders        = Attr(root, "showBorders",   true),
@@ -351,7 +351,6 @@ public class ConfigService
                 DockPosition = AllEdges[i],
                 Name         = AllEdges[i].ToString(),
                 FolderPath   = Path.Combine(_dir, AllEdges[i].ToString()),
-                Enabled      = i < 3,
             };
             SaveBar(bar);
             list.Add(bar);

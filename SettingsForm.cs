@@ -112,7 +112,7 @@ public sealed class SettingsForm : Form
             cmb.SelectedIndexChanged += (_, _) => { if (cmb.SelectedItem is ButtonStyle s) _style[idx] = s; };
             tab.Controls.Add(cmb); ty += 32;
 
-            tab.Controls.Add(Lbl(12, ty, "Toolbar colour:"));
+            tab.Controls.Add(Lbl(12, ty, "Toolbar color:"));
             var btnColor = new Button { Location = new Point(170, ty), Size = new Size(80, 24), BackColor = _color[i], FlatStyle = FlatStyle.Flat };
             btnColor.Click += (_, _) =>
             {
@@ -121,7 +121,7 @@ public sealed class SettingsForm : Form
             };
             tab.Controls.Add(btnColor); ty += 32;
 
-            tab.Controls.Add(Lbl(12, ty, "Separator colour:"));
+            tab.Controls.Add(Lbl(12, ty, "Separator color:"));
             var btnSep = new Button { Location = new Point(170, ty), Size = new Size(80, 24), BackColor = _sepColor[i], FlatStyle = FlatStyle.Flat };
             btnSep.Click += (_, _) =>
             {
