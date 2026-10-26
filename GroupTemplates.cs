@@ -35,7 +35,7 @@ internal sealed record GroupTemplate(string MenuText, string Name, Func<List<Sho
             Item("Resource Monitor",      Sys + "resmon.exe"),
             Item("System Information",    Sys + "msinfo32.exe"),
         ]),
-        new("Control Panel applets", "Applets", InstalledApplets),
+        new("C-Panel applets", "Applets", InstalledApplets),
         // Real paths with variables rather than shell:… names: same portability, but a folder icon.
         new("System paths", "Paths", () => ExistingOnly(
         [
