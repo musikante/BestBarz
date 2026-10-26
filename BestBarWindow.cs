@@ -942,7 +942,13 @@ public sealed class BestBarWindow : Form
 
         menu.Items.AddRange([cut, copy, paste, pasteInto, new ToolStripSeparator(), edit, arrange, new ToolStripSeparator()]);
         menu.Items.Add("Add Button…",   null, (_, _) => AddButtonAfter(_menuTarget));
-        menu.Items.Add("Add Group…",    null, (_, _) => AddGroupAfter(_menuTarget));
+        // Empty group, or a ready-made one (GroupTemplate.All — add more there).
+        var addGroup = new ToolStripMenuItem("Add Group");
+        addGroup.DropDownItems.Add("Empty…", null, (_, _) => AddGroupAfter(_menuTarget));
+        addGroup.DropDownItems.Add(new ToolStripSeparator());
+        foreach (var template in GroupTemplate.All)
+            addGroup.DropDownItems.Add(template.MenuText, null, (_, _) => AddTemplateGroup(template, _menuTarget));
+        menu.Items.Add(addGroup);
         menu.Items.Add("Add Separator", null, (_, _) => AddSeparatorAfter(_menuTarget));
         menu.Items.Add(new ToolStripSeparator());
         menu.Items.Add(remove);
@@ -973,7 +979,8 @@ public sealed class BestBarWindow : Form
         };
         // Any other command while arranging (Cut, Remove, …) first approves the pending order,
         // so Esc can't later restore a list those commands already changed on disk.
-        menu.ItemClicked += (_, e) => { if (e.ClickedItem != arrange && e.ClickedItem != app && _arrangeTarget != null) ExitArrangeMode(); };
+        menu.ItemClicked += (_, e) => { if (e.ClickedItem != arrange && e.ClickedItem != app && e.ClickedItem != addGroup && _arrangeTarget != null) ExitArrangeMode(); };
+        addGroup.DropDown.ItemClicked += (_, _) => { if (_arrangeTarget != null) ExitArrangeMode(); };
         menu.Opened += (_, _) => _holdOpen++;
         menu.Closed += (_, _) => _holdOpen = Math.Max(0, _holdOpen - 1);
         MenuDismiss.Attach(menu);
@@ -1040,10 +1047,21 @@ public sealed class BestBarWindow : Form
         if (string.IsNullOrWhiteSpace(name)) return;
         var safeName = string.Concat(name.Split(Path.GetInvalidFileNameChars())).Trim();
         if (string.IsNullOrEmpty(safeName)) return;
+        CreateGroup(name, safeName, [], after);
+    }
+
+    private void AddTemplateGroup(GroupTemplate template, ShortcutItem? after) =>
+        CreateGroup(template.Name, template.Name, template.Items(), after);
+
+    private void CreateGroup(string text, string fileName, List<ShortcutItem> items, ShortcutItem? after)
+    {
         // Never reuse an existing file: it belongs to another group (or is the bar's own _bar.xml).
-        var groupFile = ConfigService.UniqueGroupPath(_bar.FolderPath, safeName);
-        _cfg.SaveBar(new BarConfig { Name = safeName, FilePath = groupFile });
-        InsertAfter(new ShortcutItem { Text = name, GroupFile = groupFile }, after);
+        // When the name is taken, the button gets the same number as its file: System1, System2…
+        var groupFile = ConfigService.UniqueGroupPath(_bar.FolderPath, fileName);
+        var actual    = Path.GetFileNameWithoutExtension(groupFile);
+        if (actual != fileName) text = actual;
+        _cfg.SaveBar(new BarConfig { Name = actual, FilePath = groupFile, Shortcuts = items });
+        InsertAfter(new ShortcutItem { Text = text, GroupFile = groupFile }, after);
         CommitChange();
     }
 

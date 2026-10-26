@@ -247,12 +247,13 @@ public class ConfigService
         sc.GroupFile = dest;
     }
 
-    // "_bar" is taken by the bar's own file, so a group with that name also gets a numbered file.
+    // Name.xml, else Name1.xml, Name2.xml… "_bar" is taken by the bar's own file, so a group with that
+    // name also gets a numbered file.
     public static string UniqueGroupPath(string dir, string name)
     {
         var path = Path.Combine(dir, name + ".xml");
-        for (int n = 2; File.Exists(path); n++)
-            path = Path.Combine(dir, $"{name} {n}.xml");
+        for (int n = 1; File.Exists(path); n++)
+            path = Path.Combine(dir, $"{name}{n}.xml");
         return path;
     }
 
