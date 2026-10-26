@@ -81,7 +81,7 @@ public class GlobalConfig
     public bool ProtectTopLeftCorner  { get; set; } = true;
     public bool ProtectTopRightCorner { get; set; } = true;
 
-    public ButtonStyle[] ButtonLayout    { get; set; } = [ButtonStyle.LargeIconText, ButtonStyle.LargeIconText, ButtonStyle.LargeIconText, ButtonStyle.LargeIconText];
+    public ButtonStyle[] ButtonLayout    { get; set; } = [ButtonStyle.SmallIconText, ButtonStyle.SmallIconText, ButtonStyle.SmallIconText, ButtonStyle.SmallIconText];
     public int[]         ShowDelay       { get; set; } = [0, 0, 0, 0];
     public int[]         HideDelay       { get; set; } = [0, 0, 0, 0];
     public int[]         MaxButtonWidth  { get; set; } = [180, 120, 180, 120];
