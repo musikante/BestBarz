@@ -22,10 +22,6 @@ internal sealed record GroupTemplate(string MenuText, string Name, Func<List<Sho
             Item("System Properties",     Sys + "SystemPropertiesAdvanced.exe"),
             Item("Environment Variables", Sys + "rundll32.exe", "sysdm.cpl,EditEnvironmentVariables"),
             Item("Disk Cleanup",          Sys + "cleanmgr.exe"),
-            Separator(),
-            Item("Temp",                  "%TEMP%"),
-            Item("Startup",               "shell:startup"),
-            Item("AppData",               "%APPDATA%"),
         ]),
         new("Admin utilities", "Admin", () =>
         [
@@ -40,7 +36,41 @@ internal sealed record GroupTemplate(string MenuText, string Name, Func<List<Sho
             Item("System Information",    Sys + "msinfo32.exe"),
         ]),
         new("Control Panel applets", "Applets", InstalledApplets),
+        // Real paths with variables rather than shell:… names: same portability, but a folder icon.
+        new("System paths", "Paths", () => ExistingOnly(
+        [
+            Item("Windows",              "%SystemRoot%"),
+            Item("System32",             "%SystemRoot%\\System32"),
+            Item("Hosts",                "%SystemRoot%\\System32\\drivers\\etc"),
+            Item("Fonts",                "%SystemRoot%\\Fonts"),
+            Separator(),
+            Item("Program Files",        "%ProgramFiles%"),
+            Item("Program Files (x86)",  "%ProgramFiles(x86)%"),
+            Item("ProgramData",          "%ProgramData%"),
+            Separator(),
+            Item("User profile",         "%UserProfile%"),
+            Item("AppData (Roaming)",    "%AppData%"),
+            Item("Local AppData",        "%LocalAppData%"),
+            Item("LocalLow",             "%UserProfile%\\AppData\\LocalLow"),
+            Item("Temp",                 "%Temp%"),
+            Separator(),
+            Item("Startup",              "%AppData%\\Microsoft\\Windows\\Start Menu\\Programs\\Startup"),
+            Item("Start Menu programs",  "%AppData%\\Microsoft\\Windows\\Start Menu\\Programs"),
+            Item("Send To",              "%AppData%\\Microsoft\\Windows\\SendTo"),
+        ])),
     ];
+
+    // Drops folders missing on this PC (e.g. Program Files (x86) on 32-bit Windows), then any
+    // separator left leading, trailing or doubled.
+    private static List<ShortcutItem> ExistingOnly(List<ShortcutItem> items)
+    {
+        var kept = new List<ShortcutItem>();
+        foreach (var sc in items.Where(sc => sc.IsSeparator || Directory.Exists(sc.ExpandedTarget)))
+            if (!sc.IsSeparator || (kept.Count > 0 && !kept[^1].IsSeparator))
+                kept.Add(sc);
+        if (kept.Count > 0 && kept[^1].IsSeparator) kept.RemoveAt(kept.Count - 1);
+        return kept;
+    }
 
     private static readonly Dictionary<string, string> AppletNames = new(StringComparer.OrdinalIgnoreCase)
     {
