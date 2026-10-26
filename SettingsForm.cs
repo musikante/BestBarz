@@ -233,6 +233,13 @@ public sealed class SettingsForm : Form
         var version = asm.GetName().Version?.ToString(3) ?? "?";
         var desc    = asm.GetCustomAttributes(typeof(System.Reflection.AssemblyDescriptionAttribute), false)
                          .OfType<System.Reflection.AssemblyDescriptionAttribute>().FirstOrDefault()?.Description ?? "";
+        var repo    = asm.GetCustomAttributes(typeof(System.Reflection.AssemblyMetadataAttribute), false)
+                         .OfType<System.Reflection.AssemblyMetadataAttribute>()
+                         .FirstOrDefault(a => a.Key == "RepositoryUrl")?.Value;
+        // "1.0.0+<full sha>": the commit HEAD was at when this build was made.
+        var info    = asm.GetCustomAttributes(typeof(System.Reflection.AssemblyInformationalVersionAttribute), false)
+                         .OfType<System.Reflection.AssemblyInformationalVersionAttribute>().FirstOrDefault()?.InformationalVersion ?? "";
+        var sha     = info.Contains('+') ? info[(info.IndexOf('+') + 1)..] : "";
 
         var titleFont = new Font("Segoe UI", 16f, FontStyle.Bold);
         page.Disposed += (_, _) => titleFont.Dispose();
@@ -241,22 +248,40 @@ public sealed class SettingsForm : Form
             Text = "BestBarz", Font = titleFont,
             Location = new Point(12, 12), AutoSize = true,
         });
-        page.Controls.Add(Lbl(14, 52, $"Version {version}"));
+        var versionText = $"Version {version}";
+        if (sha.Length >= 7) versionText += $" · commit {sha[..7]}";
+        var lnkVersion = new LinkLabel { Text = versionText, Location = new Point(14, 55), AutoSize = true };
+        if (sha.Length >= 7 && repo != null)
+        {
+            lnkVersion.LinkArea = new LinkArea(versionText.Length - 7, 7);
+            lnkVersion.LinkClicked += (_, _) => OpenUrl($"{repo}/commit/{sha}");
+        }
+        else lnkVersion.LinkArea = new LinkArea(0, 0);
+        page.Controls.Add(lnkVersion);
         page.Controls.Add(Lbl(14, 74, desc));
         page.Controls.Add(Lbl(14, 96, $".NET {Environment.Version}"));
+        if (repo != null)
+        {
+            var lnkRepo = new LinkLabel { Text = repo.Replace("https://", ""), Location = new Point(14, 121), AutoSize = true };
+            lnkRepo.LinkClicked += (_, _) => OpenUrl(repo);
+            page.Controls.Add(lnkRepo);
+        }
 
-        page.Controls.Add(Lbl(14, 140, "Config folder:"));
+        page.Controls.Add(Lbl(14, 156, "Config folder:"));
         var txtPath = new TextBox
         {
             Text = _cfg.ConfigDir, ReadOnly = true, TabStop = false,
-            Location = new Point(14, 164), Width = 360,
+            Location = new Point(14, 180), Width = 360,
         };
-        var btnOpen = new Button { Text = "Open folder", Location = new Point(380, 163), Size = new Size(84, 25) };
+        var btnOpen = new Button { Text = "Open folder", Location = new Point(380, 179), Size = new Size(84, 25) };
         btnOpen.Click += (_, _) => System.Diagnostics.Process.Start("explorer.exe", $"\"{_cfg.ConfigDir}\"");
         page.Controls.Add(txtPath);
         page.Controls.Add(btnOpen);
         return page;
     }
+
+    private static void OpenUrl(string url) =>
+        System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(url) { UseShellExecute = true });
 
     // ── Cleanup ───────────────────────────────────────────────────────────────
 

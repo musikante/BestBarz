@@ -11,5 +11,10 @@
     <Version>1.0.0</Version>
     <Product>BestBarz</Product>
     <Description>Edge toolbars for Windows, inspired by Coolbarz.</Description>
+    <RepositoryUrl>https://github.com/musikante/BestBarz</RepositoryUrl>
   </PropertyGroup>
+  <ItemGroup>
+    <!-- Read by the About tab; the commit comes from the SDK's InformationalVersion ("1.0.0+sha"). -->
+    <AssemblyMetadata Include="RepositoryUrl" Value="$(RepositoryUrl)" />
+  </ItemGroup>
 </Project>
