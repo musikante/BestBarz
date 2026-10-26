@@ -23,9 +23,12 @@ internal sealed class ProgramPickerForm : Form
 
     public List<ShortcutItem> Selected { get; } = [];
 
-    public ProgramPickerForm()
+    /// <summary>For a new group: the Start menu folder all picks share (top level), else "Programs".</summary>
+    public string SuggestedGroupName { get; private set; } = "Programs";
+
+    public ProgramPickerForm(string title = "Add Programs")
     {
-        Text            = "Add Programs";
+        Text            = title;
         ClientSize      = new Size(460, 520);
         MinimumSize     = new Size(360, 300);
         StartPosition   = FormStartPosition.Manual;
@@ -56,8 +59,13 @@ internal sealed class ProgramPickerForm : Form
 
         _add = new Button { Text = "Add", Size = new Size(110, 28), Location = new Point(256, 484), DialogResult = DialogResult.OK,
                             Anchor = AnchorStyles.Bottom | AnchorStyles.Right, Enabled = false };
-        _add.Click += (_, _) => Selected.AddRange(_all.Where(_checked.Contains)
-                                                      .Select(p => new ShortcutItem { Text = p.Name, Target = p.Target }));
+        _add.Click += (_, _) =>
+        {
+            var picked = _all.Where(_checked.Contains).ToList();
+            Selected.AddRange(picked.Select(p => new ShortcutItem { Text = p.Name, Target = p.Target }));
+            var tops = picked.Select(p => p.Folder.Split('\\')[0]).Distinct(StringComparer.CurrentCultureIgnoreCase).ToList();
+            if (tops is [{ Length: > 0 } common]) SuggestedGroupName = common;
+        };
         var cancel = new Button { Text = "Cancel", Size = new Size(80, 28), Location = new Point(372, 484), DialogResult = DialogResult.Cancel,
                                   Anchor = AnchorStyles.Bottom | AnchorStyles.Right };
 

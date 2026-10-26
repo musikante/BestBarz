@@ -946,6 +946,7 @@ public sealed class BestBarWindow : Form
         // Empty group, or a ready-made one (GroupTemplate.All — add more there).
         var addGroup = new ToolStripMenuItem("Add Group");
         addGroup.DropDownItems.Add("Empty…", null, (_, _) => AddGroupAfter(_menuTarget));
+        addGroup.DropDownItems.Add("From programs…", null, (_, _) => AddGroupFromPrograms(_menuTarget));
         addGroup.DropDownItems.Add(new ToolStripSeparator());
         foreach (var template in GroupTemplate.All)
             addGroup.DropDownItems.Add(template.MenuText, null, (_, _) => AddTemplateGroup(template, _menuTarget));
@@ -1056,6 +1057,23 @@ public sealed class BestBarWindow : Form
                 after = sc;   // keep the picked order
             }
             CommitChange();
+        }
+        finally { _holdOpen = Math.Max(0, _holdOpen - 1); }
+    }
+
+    private void AddGroupFromPrograms(ShortcutItem? after)
+    {
+        _holdOpen++;
+        try
+        {
+            using var dlg = new ProgramPickerForm("New Group from Programs");
+            dlg.Location = DialogLocationOutside(dlg.Size);
+            if (dlg.ShowDialog(this) != DialogResult.OK) return;
+            string? name = PromptName("Add Group", "Group name:", dlg.SuggestedGroupName);
+            if (string.IsNullOrWhiteSpace(name)) return;
+            var safeName = string.Concat(name.Split(Path.GetInvalidFileNameChars())).Trim();
+            if (string.IsNullOrEmpty(safeName)) return;
+            CreateGroup(name, safeName, dlg.Selected, after);
         }
         finally { _holdOpen = Math.Max(0, _holdOpen - 1); }
     }
