@@ -178,6 +178,7 @@ public sealed class GroupPopupWindow : Form
 
         menu.Items.AddRange([cut, copy, paste, new ToolStripSeparator(), edit, arrange, new ToolStripSeparator()]);
         menu.Items.Add("Add Button…",   null, (_, _) => AddButtonAfter(_menuTarget));
+        menu.Items.Add("Add Programs…", null, (_, _) => AddProgramsAfter(_menuTarget));
         menu.Items.Add("Add Separator", null, (_, _) => AddSeparatorAfter(_menuTarget));
         menu.Items.Add(new ToolStripSeparator());
         menu.Items.Add(remove);
@@ -313,20 +314,7 @@ public sealed class GroupPopupWindow : Form
         try
         {
             using var dlg = new ShortcutEditorForm(sc);
-            var screen = Screen.FromRectangle(Bounds).WorkingArea;
-            var popup  = Bounds;
-            dlg.StartPosition = FormStartPosition.Manual;
-            int dx, dy;
-            switch (_parentEdge)
-            {
-                case DockPosition.Left:   dx = popup.Right;          dy = popup.Top; break;
-                case DockPosition.Right:  dx = popup.Left - dlg.Width; dy = popup.Top; break;
-                case DockPosition.Top:    dx = popup.Left;           dy = popup.Bottom; break;
-                default:                  dx = popup.Left;           dy = popup.Top - dlg.Height; break;
-            }
-            dlg.Location = new Point(
-                Math.Max(screen.Left, Math.Min(dx, screen.Right  - dlg.Width)),
-                Math.Max(screen.Top,  Math.Min(dy, screen.Bottom - dlg.Height)));
+            PlaceDialog(dlg);
             if (dlg.ShowDialog() == DialogResult.OK)
             {
                 _cfg.SaveBar(_groupBar);
@@ -373,20 +361,7 @@ public sealed class GroupPopupWindow : Form
         try
         {
             using var dlg = new ShortcutEditorForm(sc);
-            var screen = Screen.FromRectangle(Bounds).WorkingArea;
-            var popup  = Bounds;
-            dlg.StartPosition = FormStartPosition.Manual;
-            int dx, dy;
-            switch (_parentEdge)
-            {
-                case DockPosition.Left:   dx = popup.Right;           dy = popup.Top; break;
-                case DockPosition.Right:  dx = popup.Left - dlg.Width; dy = popup.Top; break;
-                case DockPosition.Top:    dx = popup.Left;            dy = popup.Bottom; break;
-                default:                  dx = popup.Left;            dy = popup.Top - dlg.Height; break;
-            }
-            dlg.Location = new Point(
-                Math.Max(screen.Left, Math.Min(dx, screen.Right  - dlg.Width)),
-                Math.Max(screen.Top,  Math.Min(dy, screen.Bottom - dlg.Height)));
+            PlaceDialog(dlg);
             if (dlg.ShowDialog() != DialogResult.OK) return;
             int i = after == null ? _groupBar.Shortcuts.Count
                                   : _groupBar.Shortcuts.IndexOf(after) + 1;
@@ -395,6 +370,40 @@ public sealed class GroupPopupWindow : Form
             RebuildItems();
         }
         finally { _menuOpen = Math.Max(0, _menuOpen - 1); }
+    }
+
+    private void AddProgramsAfter(ShortcutItem? after)
+    {
+        _menuOpen++;
+        try
+        {
+            using var dlg = new ProgramPickerForm();
+            PlaceDialog(dlg);
+            if (dlg.ShowDialog() != DialogResult.OK) return;
+            int i = after == null ? _groupBar.Shortcuts.Count : _groupBar.Shortcuts.IndexOf(after) + 1;
+            _groupBar.Shortcuts.InsertRange(Math.Clamp(i, 0, _groupBar.Shortcuts.Count), dlg.Selected);
+            _cfg.SaveBar(_groupBar);
+            RebuildItems();
+        }
+        finally { _menuOpen = Math.Max(0, _menuOpen - 1); }
+    }
+
+    // Beside the popup, on the side away from the bar, kept on screen.
+    private void PlaceDialog(Form dlg)
+    {
+        var screen = Screen.FromRectangle(Bounds).WorkingArea;
+        var popup  = Bounds;
+        dlg.StartPosition = FormStartPosition.Manual;
+        var (dx, dy) = _parentEdge switch
+        {
+            DockPosition.Left  => (popup.Right,             popup.Top),
+            DockPosition.Right => (popup.Left - dlg.Width,  popup.Top),
+            DockPosition.Top   => (popup.Left,              popup.Bottom),
+            _                  => (popup.Left,              popup.Top - dlg.Height),
+        };
+        dlg.Location = new Point(
+            Math.Max(screen.Left, Math.Min(dx, screen.Right  - dlg.Width)),
+            Math.Max(screen.Top,  Math.Min(dy, screen.Bottom - dlg.Height)));
     }
 
     private static void LaunchItem(ShortcutItem sc) => BestBarWindow.Launch(sc);

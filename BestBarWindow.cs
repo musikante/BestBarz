@@ -942,6 +942,7 @@ public sealed class BestBarWindow : Form
 
         menu.Items.AddRange([cut, copy, paste, pasteInto, new ToolStripSeparator(), edit, arrange, new ToolStripSeparator()]);
         menu.Items.Add("Add Button…",   null, (_, _) => AddButtonAfter(_menuTarget));
+        menu.Items.Add("Add Programs…", null, (_, _) => AddProgramsAfter(_menuTarget));
         // Empty group, or a ready-made one (GroupTemplate.All — add more there).
         var addGroup = new ToolStripMenuItem("Add Group");
         addGroup.DropDownItems.Add("Empty…", null, (_, _) => AddGroupAfter(_menuTarget));
@@ -1039,6 +1040,24 @@ public sealed class BestBarWindow : Form
             CommitChange();
         }
         finally { _holdOpen--; }
+    }
+
+    private void AddProgramsAfter(ShortcutItem? after)
+    {
+        _holdOpen++;
+        try
+        {
+            using var dlg = new ProgramPickerForm();
+            dlg.Location = DialogLocationOutside(dlg.Size);
+            if (dlg.ShowDialog(this) != DialogResult.OK) return;
+            foreach (var sc in dlg.Selected)
+            {
+                InsertAfter(sc, after);
+                after = sc;   // keep the picked order
+            }
+            CommitChange();
+        }
+        finally { _holdOpen = Math.Max(0, _holdOpen - 1); }
     }
 
     private void AddGroupAfter(ShortcutItem? after)
