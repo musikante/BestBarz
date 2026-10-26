@@ -233,9 +233,7 @@ public sealed class SettingsForm : Form
         var version = asm.GetName().Version?.ToString(3) ?? "?";
         var desc    = asm.GetCustomAttributes(typeof(System.Reflection.AssemblyDescriptionAttribute), false)
                          .OfType<System.Reflection.AssemblyDescriptionAttribute>().FirstOrDefault()?.Description ?? "";
-        var repo    = asm.GetCustomAttributes(typeof(System.Reflection.AssemblyMetadataAttribute), false)
-                         .OfType<System.Reflection.AssemblyMetadataAttribute>()
-                         .FirstOrDefault(a => a.Key == "RepositoryUrl")?.Value;
+        var repo    = Program.RepositoryUrl;
         // "1.0.0+<full sha>": the commit HEAD was at when this build was made.
         var info    = asm.GetCustomAttributes(typeof(System.Reflection.AssemblyInformationalVersionAttribute), false)
                          .OfType<System.Reflection.AssemblyInformationalVersionAttribute>().FirstOrDefault()?.InformationalVersion ?? "";
@@ -254,16 +252,19 @@ public sealed class SettingsForm : Form
         if (sha.Length >= 7 && repo != null)
         {
             lnkVersion.LinkArea = new LinkArea(versionText.Length - 7, 7);
-            lnkVersion.LinkClicked += (_, _) => OpenUrl($"{repo}/commit/{sha}");
+            lnkVersion.LinkClicked += (_, _) => Program.OpenUrl($"{repo}/commit/{sha}");
         }
         else lnkVersion.LinkArea = new LinkArea(0, 0);
         page.Controls.Add(lnkVersion);
         page.Controls.Add(Lbl(14, 74, desc));
         page.Controls.Add(Lbl(14, 96, $".NET {Environment.Version}"));
+        var lnkHelp = new LinkLabel { Text = "User guide", Location = new Point(14, 121), AutoSize = true };
+        lnkHelp.LinkClicked += (_, _) => Program.OpenHelp();
+        page.Controls.Add(lnkHelp);
         if (repo != null)
         {
-            var lnkRepo = new LinkLabel { Text = repo.Replace("https://", ""), Location = new Point(14, 121), AutoSize = true };
-            lnkRepo.LinkClicked += (_, _) => OpenUrl(repo);
+            var lnkRepo = new LinkLabel { Text = repo.Replace("https://", ""), Location = new Point(110, 121), AutoSize = true };
+            lnkRepo.LinkClicked += (_, _) => Program.OpenUrl(repo);
             page.Controls.Add(lnkRepo);
         }
 
@@ -279,9 +280,6 @@ public sealed class SettingsForm : Form
         page.Controls.Add(btnOpen);
         return page;
     }
-
-    private static void OpenUrl(string url) =>
-        System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(url) { UseShellExecute = true });
 
     // ── Cleanup ───────────────────────────────────────────────────────────────
 

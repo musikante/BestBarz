@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BestBarz Help</title>
+<style>
+  :root {
+    --bg: #ffffff; --fg: #1f2328; --muted: #59636e; --line: #d1d9e0;
+    --accent: #0969da; --code-bg: #f3f4f6; --note-bg: #ddf4ff; --note-line: #54aeff;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0d1117; --fg: #e6edf3; --muted: #9198a1; --line: #3d444d;
+      --accent: #4493f8; --code-bg: #1f2428; --note-bg: #0c2d4b; --note-line: #1f6feb;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--fg);
+    font: 15px/1.6 "Segoe UI", system-ui, sans-serif;
+  }
+  .wrap { max-width: 860px; margin: 0 auto; padding: 32px 20px 64px; }
+  h1 { font-size: 2em; margin: 0 0 4px; }
+  .lead { color: var(--muted); margin: 0 0 24px; }
+  h2 { font-size: 1.4em; margin: 40px 0 12px; padding-bottom: 6px; border-bottom: 1px solid var(--line); }
+  h3 { font-size: 1.1em; margin: 24px 0 8px; }
+  a { color: var(--accent); }
+  code, kbd {
+    font: 0.9em Consolas, "Cascadia Mono", monospace; background: var(--code-bg);
+    padding: 1px 5px; border-radius: 4px;
+  }
+  kbd { border: 1px solid var(--line); border-bottom-width: 2px; }
+  pre { background: var(--code-bg); padding: 12px 14px; border-radius: 6px; overflow-x: auto; }
+  pre code { padding: 0; background: none; }
+  table { border-collapse: collapse; width: 100%; margin: 8px 0 16px; }
+  th, td { border: 1px solid var(--line); padding: 6px 10px; text-align: left; vertical-align: top; }
+  th { background: var(--code-bg); }
+  .note { background: var(--note-bg); border-left: 4px solid var(--note-line); padding: 10px 14px; border-radius: 4px; }
+  nav ol { columns: 2; margin: 0; padding-left: 20px; }
+  @media (max-width: 600px) { nav ol { columns: 1; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>BestBarz</h1>
+<p class="lead">Auto-hiding toolbars on the edges of the screen. This guide covers everyday use;
+for building from source see the README on GitHub.</p>
+
+<nav>
+<ol>
+  <li><a href="#bars">Showing and hiding the bars</a></li>
+  <li><a href="#menu">The right-click menu</a></li>
+  <li><a href="#buttons">Buttons</a></li>
+  <li><a href="#groups">Groups</a></li>
+  <li><a href="#arrange">Arrange mode</a></li>
+  <li><a href="#settings">Settings</a></li>
+  <li><a href="#config">Configuration files</a></li>
+  <li><a href="#keys">Keys at a glance</a></li>
+</ol>
+</nav>
+
+<h2 id="bars">1. Showing and hiding the bars</h2>
+<p>There is one bar per screen edge: <b>Left</b>, <b>Top</b>, <b>Right</b> and <b>Bottom</b>.
+Move the pointer to an edge and its bar appears; move away and it hides.</p>
+<ul>
+  <li>The <b>whole edge</b> opens the bar, wherever its buttons are. The <b>corners</b> open none,
+      so reaching a corner doesn't open two bars at once.</li>
+  <li>Once open, a bar stays open while the pointer is anywhere along its edge strip,
+      so you can travel to its buttons without it closing.</li>
+  <li>When a <b>fullscreen</b> app is in front (a game, a video, a remote desktop),
+      the bars stay hidden.</li>
+  <li>Holding <kbd>Ctrl</kbd> while reaching an edge always opens its bar, even over a fullscreen app.</li>
+  <li>The bar on the <b>Windows taskbar's side</b> opens only with <kbd>Ctrl</kbd>, so it doesn't
+      pop up every time you head for the taskbar. With <kbd>Ctrl</kbd> held, the taskbar itself
+      also opens it.</li>
+  <li><kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>B</kbd> hides every bar until you press it again.</li>
+  <li>With <i>Show bars over apps without Ctrl</i> turned off in Settings, the bars open by themselves
+      only while the desktop or the taskbar has the focus; over any other app they need <kbd>Ctrl</kbd>.</li>
+</ul>
+<div class="note">The bars normally sit beside the Windows taskbar. A bar set to
+<i>Cover the taskbar</i> uses the whole screen edge instead and appears over it.</div>
+
+<h2 id="menu">2. The right-click menu</h2>
+<p>Right-click anywhere on a bar — a button, a group, a separator or the empty space —
+to get its menu. Commands about an item act on the one you clicked; new items are placed
+right after it (or at the end, when you clicked the empty space).</p>
+<table>
+  <tr><th>Command</th><th>What it does</th></tr>
+  <tr><td>Cut / Copy / Paste</td><td>Move or duplicate items between bars and groups. After <i>Cut</i>,
+      the item is pasted once; after <i>Copy</i>, it can be pasted as many times as you like.</td></tr>
+  <tr><td>Paste Into Group</td><td>On a group: puts the cut or copied item inside it.</td></tr>
+  <tr><td>Edit… / Rename…</td><td>Edit a button or separator; on a group, rename it.</td></tr>
+  <tr><td>Arrange mode</td><td>Reorder items (see <a href="#arrange">Arrange mode</a>).</td></tr>
+  <tr><td>Add Button…</td><td>Create a button by hand.</td></tr>
+  <tr><td>Add Programs…</td><td>Pick programs from the Start menu (see <a href="#buttons">Buttons</a>).</td></tr>
+  <tr><td>Add Group ▸</td><td>Create an empty group, a group of programs, or a ready-made one
+      (see <a href="#groups">Groups</a>).</td></tr>
+  <tr><td>Add Separator</td><td>A thin divider; edit it to give it a label.</td></tr>
+  <tr><td>Remove</td><td>Delete the item, after confirming.</td></tr>
+  <tr><td>Global ▸</td><td>Settings, Help, <i>Hide bars</i>, turning each bar on or off,
+      and <i>Exit BestBarz</i>. The same menu opens from the tray icon (left or right click).</td></tr>
+</table>
+<p>A menu closes with <kbd>Esc</kbd>, with a click elsewhere, or when you switch to another app.</p>
+
+<h2 id="buttons">3. Buttons</h2>
+<h3>Add Button… / Edit…</h3>
+<table>
+  <tr><th>Field</th><th>Meaning</th></tr>
+  <tr><td>Label</td><td>The text shown on the button.</td></tr>
+  <tr><td>Target</td><td>The program, document, folder or address to open. <b>…</b> browses for a file.</td></tr>
+  <tr><td>Arguments</td><td>Passed to the program, e.g. <code>mmsys.cpl</code> for <code>control.exe</code>.</td></tr>
+  <tr><td>Work Dir</td><td>Folder to start in; empty means the target's own folder.</td></tr>
+</table>
+<ul>
+  <li>Paths may use <b>environment variables</b> — <code>%SystemRoot%</code>, <code>%AppData%</code>,
+      <code>%UserProfile%</code>… — so a button keeps working on another PC or user account.</li>
+  <li>Quotes around a pasted path (as Explorer's <i>Copy as path</i> adds) are removed.</li>
+  <li>Each button shows its target's icon; Control Panel applets (<code>.cpl</code>) show their own.</li>
+  <li>You can also drop files or folders from Explorer onto a bar to add them.</li>
+</ul>
+<h3>Add Programs…</h3>
+<p>Lists the programs of the Start menu (uninstallers and documentation left out). Type to search,
+tick the ones you want — ticks survive a new search — and press <b>Add</b>.</p>
+
+<h2 id="groups">4. Groups</h2>
+<p>A group is a button with an arrow; clicking it opens a popup with more items. The popup has
+its own right-click menu, much like the bar's. Groups cannot contain other groups.</p>
+<h3>Add Group ▸</h3>
+<table>
+  <tr><th>Entry</th><th>Creates</th></tr>
+  <tr><td>Empty…</td><td>An empty group; you choose the name.</td></tr>
+  <tr><td>From programs…</td><td>A group with programs picked from the Start menu; the name suggested
+      is their common Start menu folder.</td></tr>
+  <tr><td>System utilities</td><td>Control Panel, Programs and Features, System Properties,
+      Environment Variables, Disk Cleanup.</td></tr>
+  <tr><td>Admin utilities</td><td>Computer, Device and Disk Management, Event Viewer, Registry Editor,
+      Task Manager, Resource Monitor, System Information.</td></tr>
+  <tr><td>C-Panel applets</td><td>Every Control Panel applet installed on this PC.</td></tr>
+  <tr><td>System paths</td><td>Windows, Program Files, ProgramData, the user profile, AppData, Temp,
+      Start menu folders…</td></tr>
+</table>
+<p>The ready-made groups are a quick source of links: copy the items you want to where you want
+them, then remove the group. If a name is taken, a number is added: <code>System1</code>,
+<code>System2</code>…</p>
+<p>Other ways to fill a group: <i>Paste Into Group</i>, or, in Arrange mode, dropping an item on the
+group (or moving it next to the group and pressing <kbd>Enter</kbd>).</p>
+
+<h2 id="arrange">5. Arrange mode</h2>
+<p>Right-click an item and choose <i>Arrange mode</i>. The item gets a blue frame, the bar a blue border,
+and (unless turned off in Settings) a small help window appears.</p>
+<table>
+  <tr><th>Key</th><th>Action</th></tr>
+  <tr><td><kbd>←</kbd> <kbd>↑</kbd> <kbd>PgUp</kbd></td><td>Move one place back</td></tr>
+  <tr><td><kbd>→</kbd> <kbd>↓</kbd> <kbd>PgDn</kbd></td><td>Move one place forward</td></tr>
+  <tr><td><kbd>Home</kbd> / <kbd>End</kbd></td><td>Move to the start / end</td></tr>
+  <tr><td>Next to a group</td><td>The group turns orange: <kbd>Enter</kbd> drops the item inside;
+      the same arrow again skips over it</td></tr>
+  <tr><td><kbd>Enter</kbd></td><td>Save and finish</td></tr>
+  <tr><td><kbd>Esc</kbd></td><td>Cancel, restoring the previous order</td></tr>
+  <tr><td>Mouse</td><td>Drag to reorder; drop on a group to move the item inside</td></tr>
+</table>
+
+<h2 id="settings">6. Settings</h2>
+<p>Open it from <i>Global ▸ Settings…</i> or the tray icon. Changes apply when you press <b>OK</b>.</p>
+<h3>General</h3>
+<table>
+  <tr><td>Show system tray icon</td><td>The icon next to the clock.</td></tr>
+  <tr><td>Start with Windows</td><td>Start BestBarz when you sign in (with the same config folder).</td></tr>
+  <tr><td>Show tooltips</td><td>Name and target when hovering a button.</td></tr>
+  <tr><td>Toolbar fading</td><td>Fade the bars in and out.</td></tr>
+  <tr><td>Show bars over apps without Ctrl</td><td>Off: over apps, bars open only with <kbd>Ctrl</kbd>.</td></tr>
+  <tr><td>Show Arrange mode help</td><td>The help window of Arrange mode.</td></tr>
+  <tr><td>Poll interval, fade steps</td><td>How often the pointer is checked, and fading speed.</td></tr>
+  <tr><td>Clean up unused groups…</td><td>Moves group files no bar uses any more to the Recycle Bin.</td></tr>
+  <tr><td>Reload config</td><td>Rereads the configuration files.</td></tr>
+</table>
+<h3>One tab per bar</h3>
+<table>
+  <tr><td>Enabled</td><td>Turn the bar on or off.</td></tr>
+  <tr><td>Monitor index</td><td>Which screen the bar is on (0 = first).</td></tr>
+  <tr><td>Button style</td><td>Large or small icon, with or without text.</td></tr>
+  <tr><td>Toolbar / Separator colour</td><td>Colors of the bar and its separators.</td></tr>
+  <tr><td>Always visible</td><td>Keep the bar shown (hidden only by fullscreen apps and
+      <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>B</kbd>).</td></tr>
+  <tr><td>Cover the taskbar</td><td>Use the whole screen edge, over the Windows taskbar.</td></tr>
+  <tr><td>Alignment</td><td>Near, Center or Far; <i>Stretch</i> fills the edge with the buttons centered.</td></tr>
+  <tr><td>Clear bar…</td><td>Remove all of the bar's items (when you press OK).</td></tr>
+</table>
+<p>The <b>About</b> tab shows the version, the build's commit, the GitHub repository and
+the configuration folder.</p>
+
+<h2 id="config">7. Configuration files</h2>
+<p>Everything is kept in plain XML files, by default in a <code>Config</code> folder next to
+<code>BestBarz.exe</code>:</p>
+<pre><code>Config\
+  _global.xml          settings shared by all bars
+  Left\  Top\  Right\  Bottom\
+    _bar.xml           the bar's settings and buttons
+    &lt;Group&gt;.xml        one file per group</code></pre>
+<ul>
+  <li>The <b>folder name decides the edge</b>; other folders are ignored. To switch a whole bar,
+      rename folders — e.g. <code>Top</code> → <code>Top-Work</code> and <code>Top-Home</code> → <code>Top</code>.</li>
+  <li>Changes made by hand are applied automatically within a couple of seconds.</li>
+  <li>Some options exist only in the files: in <code>_bar.xml</code>, <code>buttonColor</code>,
+      <code>buttonTextColor</code>, <code>separatorTextColor</code>, <code>separatorTextAlign</code>,
+      <code>showBorders</code>; in <code>_global.xml</code>, <code>showDelay</code>, <code>hideDelay</code>,
+      <code>pointerDistance</code> and <code>maxButtonWidth</code> (one value per edge: Left, Top, Right, Bottom),
+      <code>maxOpacity</code>, <code>protectTopLeftCorner</code> and <code>protectTopRightCorner</code>.</li>
+  <li>Colors are a Windows color name (<code>Control</code>, <code>SteelBlue</code>) or <code>R;G;B</code>.</li>
+</ul>
+<h3>Another configuration folder</h3>
+<pre><code>BestBarz.exe --config "%AppData%\BestBarz"</code></pre>
+<p>Environment variables are allowed; a relative path is taken from the program's folder.
+The folder is created if missing; an empty one starts with default bars.</p>
+
+<h2 id="keys">8. Keys at a glance</h2>
+<table>
+  <tr><th>Keys</th><th>Action</th></tr>
+  <tr><td><kbd>Ctrl</kbd> + edge</td><td>Open that bar, even over fullscreen apps</td></tr>
+  <tr><td><kbd>Ctrl</kbd> + taskbar</td><td>Open the bar on the taskbar's side</td></tr>
+  <tr><td><kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>B</kbd></td><td>Hide / show every bar</td></tr>
+  <tr><td><kbd>Esc</kbd></td><td>Close a menu; cancel Arrange mode</td></tr>
+  <tr><td><kbd>Enter</kbd></td><td>Save Arrange mode</td></tr>
+</table>
+
+</div>
+</body>
+</html>

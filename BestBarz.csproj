@@ -16,5 +16,7 @@
   <ItemGroup>
     <!-- Read by the About tab; the commit comes from the SDK's InformationalVersion ("1.0.0+sha"). -->
     <AssemblyMetadata Include="RepositoryUrl" Value="$(RepositoryUrl)" />
+    <!-- The user guide, opened from Global ▸ Help and the About tab. -->
+    <None Include="BestBarz.html" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>

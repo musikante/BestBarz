@@ -6,6 +6,23 @@ static class Program
 {
     public static readonly string DefaultConfigDir = Path.Combine(AppContext.BaseDirectory, "Config");
 
+    // The csproj's RepositoryUrl, embedded as assembly metadata.
+    public static readonly string? RepositoryUrl =
+        typeof(Program).Assembly.GetCustomAttributes(typeof(System.Reflection.AssemblyMetadataAttribute), false)
+            .OfType<System.Reflection.AssemblyMetadataAttribute>()
+            .FirstOrDefault(a => a.Key == "RepositoryUrl")?.Value;
+
+    // The user guide shipped next to the exe; the README on GitHub if it's missing.
+    public static void OpenHelp()
+    {
+        var file = Path.Combine(AppContext.BaseDirectory, "BestBarz.html");
+        if (File.Exists(file))            OpenUrl(file);
+        else if (RepositoryUrl != null)   OpenUrl(RepositoryUrl + "#readme");
+    }
+
+    public static void OpenUrl(string url) =>
+        System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(url) { UseShellExecute = true });
+
     [STAThread]
     static void Main(string[] args)
     {

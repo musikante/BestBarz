@@ -41,6 +41,9 @@ bin\Release\net10.0-windows\BestBarz.exe
 Settings are reached from the tray icon or from any bar's right-click menu (*Global ▸ Settings…*),
 where *Start with Windows* is also available.
 
+The user guide, [`BestBarz.html`](BestBarz.html), is copied next to the exe and opens from
+*Global ▸ Help* and from the About tab in Settings.
+
 ## Configuration
 
 By default the configuration lives in a `Config` folder next to `BestBarz.exe`.

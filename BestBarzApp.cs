@@ -212,6 +212,7 @@ public sealed class BestBarzApp : ApplicationContext
         void Later(Action action) => _ui.Post(_ => action(), null);
 
         items.Add("Settings…", null, (_, _) => Later(ShowSettings));
+        items.Add("Help",      null, (_, _) => Later(Program.OpenHelp));
         items.Add(new ToolStripSeparator());
         items.Add(new ToolStripMenuItem(_barsSuspended ? "Show bars" : "Hide bars", null, (_, _) => Later(ToggleBars))
         {
