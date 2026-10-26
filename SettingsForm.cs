@@ -20,6 +20,7 @@ public sealed class SettingsForm : Form
     private ButtonStyle[] _style;
     private bool[]        _alwaysVis;
     private bool[]        _fullScreen;
+    private bool[]        _clear;   // "Clear bar…" confirmed: emptied on OK, like every other change here
     private string[]      _align;   // "Stretch" | "Near" | "Center" | "Far"
 
     public SettingsForm(GlobalConfig global, List<BarConfig> bars, ConfigService cfg)
@@ -36,6 +37,7 @@ public sealed class SettingsForm : Form
         _style     = new ButtonStyle[n];
         _alwaysVis  = new bool[n];
         _fullScreen = new bool[n];
+        _clear      = new bool[n];
         _align      = new string[n];
 
         Text            = "BestBarz — Settings";
@@ -141,7 +143,22 @@ public sealed class SettingsForm : Form
             cmbAlign.Items.AddRange(["Stretch", "Near", "Center", "Far"]);
             cmbAlign.SelectedItem = _align[i];
             cmbAlign.SelectedIndexChanged += (_, _) => { if (cmbAlign.SelectedItem is string s) _align[idx] = s; };
-            tab.Controls.Add(cmbAlign);
+            tab.Controls.Add(cmbAlign); ty += 48;
+
+            var btnClear = new Button { Text = "Clear bar…", Location = new Point(12, ty), Size = new Size(120, 26),
+                                        Enabled = bar.Shortcuts.Count > 0 };
+            btnClear.Click += (_, _) =>
+            {
+                if (MessageBox.Show(this,
+                        $"Remove all {bar.Shortcuts.Count} items from the {bar.Name} bar?\n\nThey will be removed when you press OK.",
+                        "BestBarz", MessageBoxButtons.YesNo, MessageBoxIcon.Warning, MessageBoxDefaultButton.Button2)
+                    != DialogResult.Yes)
+                    return;
+                _clear[idx]      = true;
+                btnClear.Text    = "Cleared on OK";
+                btnClear.Enabled = false;
+            };
+            tab.Controls.Add(btnClear);
 
             tabs.TabPages.Add(tab);
         }
@@ -178,6 +195,7 @@ public sealed class SettingsForm : Form
             bar.DisplayTarget = _monitor[i];
             bar.ToolbarColor  = _color[i];
             bar.SeparatorColor = _sepColor[i];
+            if (_clear[i]) bar.Shortcuts.Clear();
             _global.ButtonLayout[(int)bar.DockPosition] = _style[i];
             if (_alwaysVis[i]) _global.AlwaysVisible.Add(bar.DockPosition);
             else               _global.AlwaysVisible.Remove(bar.DockPosition);
