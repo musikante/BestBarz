@@ -18,5 +18,8 @@
     <AssemblyMetadata Include="RepositoryUrl" Value="$(RepositoryUrl)" />
     <!-- The user guide, opened from Global ▸ Help and the About tab. -->
     <None Include="BestBarz.html" CopyToOutputDirectory="PreserveNewest" />
+    <!-- Distributed alongside the exe. -->
+    <None Include="README.md"     CopyToOutputDirectory="PreserveNewest" />
+    <None Include="LICENSE"       CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>
