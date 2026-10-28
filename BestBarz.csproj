@@ -8,7 +8,7 @@
     <RootNamespace>BestBarz</RootNamespace>
     <AssemblyName>BestBarz</AssemblyName>
     <PlatformTarget>AnyCPU</PlatformTarget>
-    <Version>1.0.0</Version>
+    <Version>1.0.1</Version>
     <Product>BestBarz</Product>
     <Description>Edge toolbars for Windows, inspired by Coolbarz.</Description>
     <RepositoryUrl>https://github.com/musikante/BestBarz</RepositoryUrl>
